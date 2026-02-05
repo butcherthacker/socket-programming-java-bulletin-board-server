@@ -1,0 +1,31 @@
+name: Compile Server
+
+on:
+  push:
+    branches: [ Server ]
+  pull_request:
+    branches: [ Server ]
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Compile Java files
+      run: |
+        cd Server
+        javac *.java
+        
+    - name: Verify class files created
+      run: |
+        cd Server
+        ls -la *.class
