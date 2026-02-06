@@ -47,14 +47,20 @@ public class ProtocolClient {
     }
 
     public void disconnect() throws IOException {
-        if (out != null) {
-            out.println("DISCONNECT");
+        try {
+            if (out != null) {
+                out.println("DISCONNECT");
+            }
+            if (in != null) {
+                // Read OK response (with timeout protection)
+                // Don't wait indefinitely for response
+                in.readLine();
+            }
+        } catch (IOException e) {
+            // Ignore errors during disconnect
+        } finally {
+            close();
         }
-        if (in != null) {
-            // Read OK response
-            in.readLine();
-        }
-        close();
     }
 
     public Response sendAndRead(String commandLine) throws IOException {
@@ -89,8 +95,12 @@ public class ProtocolClient {
             // OK NOTE <note_id>
             String[] tokens = line.split("\\s+");
             if (tokens.length >= 3) {
-                int noteId = Integer.parseInt(tokens[2]);
-                return new OkNoteResponse(noteId);
+                try {
+                    int noteId = Integer.parseInt(tokens[2]);
+                    return new OkNoteResponse(noteId);
+                } catch (NumberFormatException e) {
+                    throw new IOException("Invalid note ID in response: " + line);
+                }
             }
             throw new IOException("Invalid OK NOTE format: " + line);
         }
@@ -98,13 +108,17 @@ public class ProtocolClient {
         if (line.startsWith("OK ")) {
             // Multi-line list: OK <count>
             String[] tokens = line.split("\\s+");
-            int count = Integer.parseInt(tokens[1]);
+            try {
+                int count = Integer.parseInt(tokens[1]);
 
-            // Determine if this is notes or pins based on command
-            if (sentCommand.startsWith("GET PINS")) {
-                return readPinsList(count);
-            } else {
-                return readNotesList(count);
+                // Determine if this is notes or pins based on command
+                if (sentCommand.startsWith("GET PINS")) {
+                    return readPinsList(count);
+                } else {
+                    return readNotesList(count);
+                }
+            } catch (NumberFormatException e) {
+                throw new IOException("Invalid count in response: " + line);
             }
         }
 
@@ -156,14 +170,18 @@ public class ProtocolClient {
             throw new IOException("Invalid NOTE format: " + line);
         }
 
-        int id = Integer.parseInt(tokens[1]);
-        int x = Integer.parseInt(tokens[2]);
-        int y = Integer.parseInt(tokens[3]);
-        String colour = tokens[4];
-        String pinStatus = tokens[5];
-        String message = tokens.length > 6 ? tokens[6] : "";
+        try {
+            int id = Integer.parseInt(tokens[1]);
+            int x = Integer.parseInt(tokens[2]);
+            int y = Integer.parseInt(tokens[3]);
+            String colour = tokens[4];
+            String pinStatus = tokens[5];
+            String message = tokens.length > 6 ? tokens[6] : "";
 
-        return new NoteRecord(id, x, y, colour, pinStatus, message);
+            return new NoteRecord(id, x, y, colour, pinStatus, message);
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid NOTE numeric values: " + line);
+        }
     }
 
     private PinRecord parsePinRecord(String line) throws IOException {
@@ -173,10 +191,14 @@ public class ProtocolClient {
             throw new IOException("Invalid PIN format: " + line);
         }
 
-        int x = Integer.parseInt(tokens[1]);
-        int y = Integer.parseInt(tokens[2]);
+        try {
+            int x = Integer.parseInt(tokens[1]);
+            int y = Integer.parseInt(tokens[2]);
 
-        return new PinRecord(x, y);
+            return new PinRecord(x, y);
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid PIN numeric values: " + line);
+        }
     }
 
     public void close() {

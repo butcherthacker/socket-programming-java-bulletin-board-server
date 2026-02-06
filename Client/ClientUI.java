@@ -329,6 +329,12 @@ public class ClientUI extends JFrame {
                     updateConnectionState(true);
                 } catch (Exception e) {
                     appendError("Connection failed: " + e.getMessage());
+                    // Ensure client is cleaned up on failed connection
+                    try {
+                        client.close();
+                    } catch (Exception ex) {
+                        // Ignore cleanup errors
+                    }
                     updateConnectionState(false);
                 }
             }
@@ -354,6 +360,13 @@ public class ClientUI extends JFrame {
                     appendInfo("Disconnected");
                 } catch (Exception e) {
                     appendError("Disconnect error: " + e.getMessage());
+                } finally {
+                    // Always clean up, even if disconnect fails
+                    try {
+                        client.close();
+                    } catch (Exception ex) {
+                        // Ignore cleanup errors
+                    }
                 }
                 updateConnectionState(false);
                 handshake = null;
@@ -540,7 +553,6 @@ public class ClientUI extends JFrame {
         } else if (response instanceof ErrorResponse) {
             ErrorResponse error = (ErrorResponse) response;
             appendError("< " + error.rawLine);
-            appendError("  Code: " + error.code + ", Description: " + error.description);
         } else if (response instanceof NotesListResponse) {
             NotesListResponse notesList = (NotesListResponse) response;
             appendInfo("< OK " + notesList.notes.size() + " notes:");
@@ -589,7 +601,7 @@ public class ClientUI extends JFrame {
     }
 
     private void setControlsEnabled(boolean enabled) {
-        boolean commandsEnabled = enabled && !requestInProgress;
+        boolean commandsEnabled = enabled && !requestInProgress && handshake != null;
 
         postButton.setEnabled(commandsEnabled);
         getNotesButton.setEnabled(commandsEnabled);
@@ -599,7 +611,7 @@ public class ClientUI extends JFrame {
         shakeButton.setEnabled(commandsEnabled);
         clearButton.setEnabled(commandsEnabled);
 
-        if (!enabled) {
+        if (!enabled || handshake == null) {
             postColourCombo.setEnabled(false);
             getColourCombo.setEnabled(false);
         } else {
