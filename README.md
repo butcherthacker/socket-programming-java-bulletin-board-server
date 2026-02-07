@@ -76,10 +76,10 @@ java BulletinBoardServer <port> <board_width> <board_height> <note_width> <note_
 
 **Example:**
 ```powershell
-java BulletinBoardServer 6789 200 100 20 10 red white green yellow blue
+java BulletinBoardServer 4321 200 100 20 10 red white green yellow blue
 ```
 
-This starts the server on port **6789** with:
+This starts the server on port **4321** with:
 - Board dimensions: 200×100
 - Note dimensions: 20×10
 - Available colours: red, white, green, yellow, blue
@@ -101,7 +101,7 @@ A window titled "Bulletin Board Client" will open.
 
 1. In the GUI **Connection** panel:
    - **Host**: Enter `127.0.0.1` (for local server)
-   - **Port**: Enter `6789` (or whatever port your server is using)
+   - **Port**: Enter `4321` (or whatever port your server is using)
 2. Click **Connect**
 
 **Expected Result:**
@@ -168,7 +168,7 @@ The client has four main tabs for different operations:
    cd GUI
    java BBoardClient
    ```
-   - Connect to `127.0.0.1:6789`
+   - Connect to `127.0.0.1:4321`
    - Verify HELLO message appears
    - Verify colours populate dropdowns
 
