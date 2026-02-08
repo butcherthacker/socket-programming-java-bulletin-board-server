@@ -95,7 +95,7 @@ public class ClientUI extends JFrame {
         panel.add(new JLabel("Port:"), gbc);
 
         gbc.gridx = 3;
-        portField = new JTextField("6789", 8);
+        portField = new JTextField("4321", 8);
         panel.add(portField, gbc);
 
         gbc.gridx = 4;
